@@ -1,0 +1,477 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp</title>
+    <style>
+        :root {
+            --background-color: #eae6df;
+            --primary-green: #008069;
+            --light-green: #25d366;
+            --sent-message-bg: #e7ffdb;
+            --received-message-bg: #ffffff;
+            --panel-header-bg: #f0f2f5;
+            --text-primary: #111b21;
+            --text-secondary: #667781;
+            --border-color: #e9edef;
+            --icon-color: #54656f;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        .whatsapp-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            background: var(--received-message-bg);
+            box-shadow: 0 1px 1px 0 rgba(0,0,0,.06), 0 2px 5px 0 rgba(0,0,0,.2);
+        }
+
+        /* Far Left Sidebar */
+        .sidebar {
+            width: 72px;
+            background-color: var(--panel-header-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+        }
+        .sidebar-icon {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 25px;
+            cursor: pointer;
+            fill: var(--icon-color);
+        }
+        .sidebar-icon.active {
+             fill: var(--primary-green);
+        }
+
+
+        /* Chat List Panel */
+        .chat-list-panel {
+            width: 30%;
+            max-width: 420px;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .list-header {
+            padding: 10px 16px;
+            background-color: var(--panel-header-bg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 49px;
+            flex-shrink: 0;
+        }
+        .list-header h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 500;
+        }
+        
+        #chat-list-container {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .chat-card {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .chat-card:hover {
+            background-color: var(--panel-header-bg);
+        }
+        .chat-card.active {
+            background-color: #e9edef;
+        }
+        .chat-card img {
+            width: 49px;
+            height: 49px;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+        .chat-card-info {
+             overflow: hidden;
+        }
+        .chat-card-info .name {
+            font-weight: 500;
+        }
+        .chat-card-info .last-message {
+            font-size: 14px;
+            color: var(--text-secondary);
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+
+        /* Main Chat View */
+        .chat-view-panel {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            background-color: var(--panel-header-bg);
+            color: var(--text-primary);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            height: 49px;
+            flex-shrink: 0;
+        }
+
+        .chat-header img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+
+        .chat-header .contact-name {
+            font-size: 16px;
+            font-weight: 500;
+            flex-grow: 1;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            padding: 20px 8%;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-repeat: repeat;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 7.5px;
+            max-width: 65%;
+            word-wrap: break-word;
+            box-shadow: 0 1px .5px rgba(11,20,26,.13);
+            line-height: 1.4;
+        }
+
+        .sent {
+            background-color: var(--sent-message-bg);
+            align-self: flex-end;
+        }
+
+        .received {
+            background-color: var(--received-message-bg);
+            align-self: flex-start;
+        }
+        
+        .typing-indicator {
+            align-self: flex-start;
+            background-color: var(--received-message-bg);
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 7.5px;
+            box-shadow: 0 1px .5px rgba(11,20,26,.13);
+        }
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background-color: var(--text-secondary);
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 1px;
+            animation: bounce 1.3s infinite;
+        }
+        .typing-indicator span:nth-of-type(2) { animation-delay: 0.15s; }
+        .typing-indicator span:nth-of-type(3) { animation-delay: 0.3s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
+
+        .chat-input-area {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: var(--panel-header-bg);
+            flex-shrink: 0;
+        }
+        
+        .chat-input {
+            flex-grow: 1;
+            margin: 0 15px;
+        }
+        .chat-input input {
+            width: 100%;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .chat-input-area button {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="whatsapp-container">
+        <!-- Far Left Sidebar -->
+        <div class="sidebar">
+            <svg class="sidebar-icon active" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 20.668a8.668 8.668 0 1 0 0-17.336 8.668 8.668 0 0 0 0 17.336ZM12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10Z"></path><path d="M14.643 14.184c.321-1.353-.306-2.5-1.571-3.22-1.344-.76-2.434-1.303-2.434-2.164 0-.583.45-1.107 1.15-1.107.72 0 1.09.432 1.18 1.125h1.617a2.71 2.71 0 0 0-2.61-2.222c-1.637 0-2.824 1.23-2.824 2.76 0 1.514 1.258 2.28 2.515 2.977 1.345.762 2.21 1.286 2.21 2.222 0 .614-.52 1.168-1.25 1.168-.813 0-1.28-.48-1.39-1.206h-1.616c.12 1.636 1.487 2.729 3.144 2.729 1.742 0 2.93-1.23 2.93-2.88Z"></path></svg>
+             <svg class="sidebar-icon" viewBox="0 0 24 24"><path d="M19.75 22.25H4.25A2.25 2.25 0 0 1 2 20V4A2.25 2.25 0 0 1 4.25 1.75h15.5A2.25 2.25 0 0 1 22 4v16a2.25 2.25 0 0 1-2.25 2.25ZM4.25 3.25A.75.75 0 0 0 3.5 4v16a.75.75 0 0 0 .75.75h15.5a.75.75 0 0 0 .75-.75V4a.75.75 0 0 0-.75-.75H4.25Z"></path><path d="M7.75 14.75a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm4.5 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm3.5 1a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm-8-4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm4.5 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm3.5 1a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm-8-4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm4.5 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm3.5 1a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>
+        </div>
+
+        <!-- Chat List Panel -->
+        <div class="chat-list-panel">
+            <div class="list-header">
+                <h2>Chats</h2>
+            </div>
+            <div id="chat-list-container">
+                 <!-- Chat cards will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Main Chat View -->
+        <div class="chat-view-panel">
+            <header class="chat-header">
+                <img id="chat-avatar" src="" alt="Avatar">
+                <div id="chat-name-holder" class="contact-name"></div>
+            </header>
+            <div class="chat-messages" id="chat-messages">
+                <!-- Messages will be injected here -->
+            </div>
+            <form class="chat-input-area" id="message-form">
+                <div class="chat-input">
+                    <input type="text" id="message-input" placeholder="Type a message" autocomplete="off">
+                </div>
+                <button type="submit" id="send-button">
+                    <svg width="24" height="24" viewBox="0 0 24 24"><path fill="#54656f" d="M1.101 21.757 23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"></path></svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatNameHolder = document.getElementById('chat-name-holder');
+        const chatAvatar = document.getElementById('chat-avatar');
+        const chatListContainer = document.getElementById('chat-list-container');
+
+        // --- PASTE YOUR API KEY HERE ---
+        const apiKey = 'AIzaSyBnnhRMeIMnsZVk7c5ahr5gGJy79nYUkNA';
+        // -----------------------------
+
+        const genericAvatar = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQ4cHgiIGhlaWdodD0iNDhweCIgZmlsbD0iIzU0NjU2ZiI+PHBhdGggZD0iTTEyIDEyYzIuMjEgMCA0LTEuNzkgNC00cy0xLjc5LTQtNC00LTQgMS43OS00IDQgMS43OSA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyYzAgMS4xLjkgMiAyIDJoMTRjMS4xIDAgMi0uOSAyLTJ2LTJjMC0yLjY2LTUuMzMtNC04LTR6Ii8+PC9zdmc+`;
+        const familyAvatar = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbD0iIzU0NjU2ZiIgZD0iTTEwIDJDOC45IDIgOCAyLjkgOCAzVjRIMTBWM0MxMCAyLjUgOS41IDIgOSAySDdaTTQgNUM0IDQuNSA0LjUgNSA1IDVIMTdDMTcuNSA1IDE4IDQuNSAxOCA0VjNDMTggMi41IDE3LjUgMiAxNyAySDE0VjNDMTQgMy41IDEzLjUgNCAxMyA0SDEyQzExLjUgNCAxMSAzLjUgMTEgM1YySDdWM0M3IDMuNSA2LjUgNCA2IDRINTZINTI0VjE3QzQgMTcuNSAzLjUgMTggMyAxOEwyIDE5QzIuNSAxOSAzIDE5LjUgMyAyMFYyMUMzIDIxLjUgMy41IDIyIDQgMjJIMjhDOC41IDIyIDkgMjEuNSA5IDIxVjE5TDggMThDNy41IDE4IDcgMTcuNSA3IDE3VjE0SDVWNU0xMy41IDhBMS41IDEuNSAwIDAgMCAxMiA5LjVBMS41IDEuNSAwIDAgMCAxMy41IDExQTEuNSAxLjUgMCAwIDAgMTUgOS41QTEuNSAxLjUgMCAwIDAgMTMuNSA4WiIvPgo8L3N2Zz4=`;
+        
+        let currentChatName = 'Friend';
+        let chatHistory = {};
+
+        function showTypingIndicator() {
+            if (chatMessages.querySelector('.typing-indicator')) return;
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'message typing-indicator';
+            typingIndicator.innerHTML = '<span></span><span></span><span></span>';
+            chatMessages.appendChild(typingIndicator);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const typingIndicator = chatMessages.querySelector('.typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+        
+        async function getGeminiResponse(persona, history) {
+            if (!apiKey || apiKey === 'YOUR_GOOGLE_AI_API_KEY_HERE') {
+                 addMessageToScreen("API key is not set. Please add your key to the code.", 'received');
+                 return;
+            }
+            
+            showTypingIndicator();
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+
+            // *** FIX STARTS HERE ***
+            // This is the correct format for system instructions with the Gemini API
+            const systemInstructionForAPI = {
+                parts: [{ text: `You are now acting as my ${persona}. Respond naturally and stay in character. Do not mention that you are an AI.` }]
+            };
+            
+            const contents = history.map(msg => ({
+                role: msg.type === 'sent' ? 'user' : 'model',
+                parts: [{ text: msg.text }]
+            }));
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: contents,
+                        system_instruction: systemInstructionForAPI
+                    })
+                });
+                // *** FIX ENDS HERE ***
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    // Provide a more detailed error message from the API if possible
+                    const errorMessage = errorData?.error?.message || `API Error: ${response.status}`;
+                    throw new Error(errorMessage);
+                }
+
+                const data = await response.json();
+                hideTypingIndicator();
+
+                // Add safety check for response format
+                if (data.candidates && data.candidates.length > 0 && data.candidates[0].content.parts.length > 0) {
+                    const responseText = data.candidates[0].content.parts[0].text;
+                    addMessageToScreen(responseText, 'received');
+                    
+                    chatHistory[currentChatName].messages.push({ text: responseText, type: 'received' });
+                    chatHistory[currentChatName].lastMessage = responseText;
+                    updateChatList();
+                } else {
+                    throw new Error("Received an empty or invalid response from the API.");
+                }
+
+            } catch (error) {
+                hideTypingIndicator();
+                console.error("Gemini API call failed:", error);
+                addMessageToScreen(`Error: Could not get a response. (${error.message})`, 'received');
+            }
+        }
+
+        function addMessageToScreen(text, type) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', type);
+            messageElement.textContent = text;
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function updateChatList() {
+             chatListContainer.innerHTML = '';
+             const sortedChats = Object.keys(chatHistory).sort((a,b) => (chatHistory[b].timestamp || 0) - (chatHistory[a].timestamp || 0));
+
+             sortedChats.forEach(name => {
+                const card = document.createElement('div');
+                card.classList.add('chat-card');
+                if (name === currentChatName) {
+                    card.classList.add('active');
+                }
+                card.dataset.name = name;
+
+                let avatarSrc = (['papa', 'mother', 'father'].includes(name.toLowerCase())) ? familyAvatar : genericAvatar;
+
+                card.innerHTML = `
+                    <img src="${avatarSrc}" alt="${name}">
+                    <div class="chat-card-info">
+                        <div class="name">${name}</div>
+                        <div class="last-message">${chatHistory[name].lastMessage || ''}</div>
+                    </div>
+                `;
+                card.addEventListener('click', () => switchChat(name));
+                chatListContainer.appendChild(card);
+             });
+        }
+
+        function switchChat(newName) {
+            currentChatName = newName;
+            chatNameHolder.textContent = currentChatName;
+            chatAvatar.src = (['papa', 'mother', 'father'].includes(currentChatName.toLowerCase())) ? familyAvatar : genericAvatar;
+            
+            chatMessages.innerHTML = '';
+            const history = chatHistory[currentChatName].messages || [];
+            history.forEach(msg => addMessageToScreen(msg.text, msg.type));
+            
+            if (history.length === 0) {
+                 const welcomeMessage = `You are now talking to ${currentChatName}.`;
+                 addMessageToScreen(welcomeMessage, 'received');
+                 chatHistory[currentChatName].messages.push({text: welcomeMessage, type: 'received'});
+            }
+            
+            updateChatList();
+        }
+
+        messageForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const messageText = messageInput.value.trim();
+
+            if (!messageText) return;
+
+            addMessageToScreen(messageText, 'sent');
+            
+            chatHistory[currentChatName].messages.push({ text: messageText, type: 'sent' });
+            chatHistory[currentChatName].lastMessage = messageText;
+            chatHistory[currentChatName].timestamp = Date.now();
+
+            const lowerCaseMessage = messageText.toLowerCase();
+            const triggerPhrase = "behave like ";
+
+            if (lowerCaseMessage.startsWith(triggerPhrase)) {
+                let newName = messageText.substring(triggerPhrase.length).trim();
+                if(newName){
+                    newName = newName.charAt(0).toUpperCase() + newName.slice(1);
+                    if (!chatHistory[newName]) {
+                         chatHistory[newName] = { messages: [], lastMessage: 'Chat created', timestamp: Date.now() };
+                    }
+                    switchChat(newName);
+                }
+            } else {
+                updateChatList();
+                getGeminiResponse(currentChatName, chatHistory[currentChatName].messages);
+            }
+
+            messageInput.value = '';
+        });
+
+        function initialize() {
+            if (!chatHistory['Friend']) {
+                chatHistory['Friend'] = { messages: [], lastMessage: 'Hello! How can I help? Type a message to start.', timestamp: Date.now() };
+            }
+            switchChat('Friend');
+            
+            if (chatHistory['Friend'].messages.length === 0) {
+                const initialMessage = chatHistory['Friend'].lastMessage;
+                chatHistory['Friend'].messages.push({text: initialMessage, type: 'received'});
+                addMessageToScreen(initialMessage, 'received');
+            }
+            if (apiKey === 'YOUR_GOOGLE_AI_API_KEY_HERE') {
+                addMessageToScreen("Warning: API Key is not set in the code. Please edit the HTML file to add your key. AI responses are currently disabled.", 'received');
+            }
+            updateChatList();
+        }
+
+        // --- Start the app ---
+        initialize();
+
+    </script>
+</body>
+</html>
